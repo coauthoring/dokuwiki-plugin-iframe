@@ -75,6 +75,8 @@ class syntax_plugin_iframe extends DokuWiki_Syntax_Plugin {
     function render($mode, Doku_Renderer $R, $data) {
         if($mode != 'xhtml') return false;
 
+        $data['url'] = syntax_plugin_iframe::get_var($data['url']);
+
         if(!$data['url']){
             $R->doc .= '<div class="iframe">'.hsc($data['alt']).'</div>';
         }else{
@@ -92,4 +94,93 @@ class syntax_plugin_iframe extends DokuWiki_Syntax_Plugin {
 
         return true;
     }
+
+    function get_var($urlstr){
+
+        if(substr_count($urlstr, "@") < 2) return $urlstr;
+
+        global $ID;
+        global $INFO;
+        global $conf;
+        $resultstr ="";
+
+        $splited = explode('@', $urlstr);
+
+        foreach($splited as $part){
+
+          switch ($part) {
+            case 'ID':
+                $varstr = $ID;
+                $resultstr  .= $varstr;
+                break;
+            case 'NS':
+                $varstr = getNS($ID);
+                $resultstr  .= $varstr;
+                break;
+            case 'PAGE':
+                $varstr = strtr(noNS($ID),'_',' ');
+                $resultstr  .= $varstr;
+                break;
+            case 'USER':
+                $varstr   = $_SERVER['REMOTE_USER'];
+                $resultstr  .= $varstr;
+                break;
+            case 'NAME':
+                $varstr   = ($_SERVER['REMOTE_USER'] ? $INFO['userinfo']['name'] : clientIP());
+                $resultstr  .= $varstr;
+                break;
+            case 'MAIL':
+                $varstr   = ($_SERVER['REMOTE_USER'] ? $INFO['userinfo']['mail'] : '');
+                $resultstr  .= $varstr;
+                break;
+            case 'DATE':
+                $varstr   = strftime($conf['dformat']);
+                $resultstr  .= $varstr;
+                break;
+            case 'YEAR':
+                $varstr = date('Y');
+                $resultstr  .= $varstr;
+                break;
+            case 'MONTH':
+                $varstr = date('m');
+                $resultstr  .= $varstr;
+                break;
+            case 'DAY':
+                $varstr   = date('d');
+                $resultstr  .= $varstr;
+                break;
+            case 'WIKI':
+                $varstr = $conf['title'];
+                $resultstr  .= $varstr;
+                break;
+            case 'TITLE':
+                $varstr = ($INFO['meta']['title']) ? $INFO['meta']['title'] : $part;
+                $resultstr  .= $varstr;
+                break;
+            case 'SERVER':
+                $varstr = ($_SERVER['SERVER_NAME']) ? $_SERVER['SERVER_NAME'] : $part;
+                $resultstr  .= $varstr;
+                break;
+            case 'VER':
+                $varstr = self::$wikiVERSION;
+                break;
+            case 'VERR':
+                list($vrel,$vdate,$vname) = explode(' ', self::$wikiVERSION);
+                $varstr = trim($vdate);
+                $resultstr  .= $varstr;
+                break;
+            case 'VERN':
+                list($vrel,$vdate,$vname) = explode(' ', self::$wikiVERSION);
+                $varstr = trim(substr($vname, 1, -1));
+                $resultstr  .= $varstr;
+                break;
+            default:
+                $varstr = $part;
+                $resultstr  .= $varstr;
+                break;
+          }//switch
+        }//for each
+        return $resultstr;
+    }
+
 }
